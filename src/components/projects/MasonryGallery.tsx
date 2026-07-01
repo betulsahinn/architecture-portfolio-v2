@@ -11,6 +11,8 @@ type GalleryImage = {
   id: string;
   url: string;
   webUrl?: string | null;
+  thumbnailUrl?: string | null;
+  originalUrl?: string | null;
   alt: string | null;
 };
 
@@ -82,13 +84,14 @@ export function MasonryGallery({ images, language }: MasonryGalleryProps) {
             >
               <SmartImage
                 src={imageUrl}
+                sources={[image.thumbnailUrl, image.url]}
                 alt={image.alt ?? "Project image"}
                 width={800}
                 height={600}
                 className="h-auto w-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                loading={index < 3 ? "eager" : "lazy"}
-                fallbackLabel={language === "tr" ? "Görsel yüklenemedi" : "Image unavailable"}
+                loading={index === 0 ? "eager" : "lazy"}
+                fetchPriority={index === 0 ? "high" : "auto"}
               />
               <div className="pointer-events-none absolute inset-0 bg-charcoal/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
             </motion.button>
@@ -116,7 +119,6 @@ export function MasonryGallery({ images, language }: MasonryGalleryProps) {
           onClose={closeLightbox}
           onNext={goNext}
           onPrev={goPrev}
-          language={language}
         />
       )}
     </>

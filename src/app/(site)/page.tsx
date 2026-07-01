@@ -26,8 +26,11 @@ async function getHeroSettings() {
     ctaUrl: settings?.ctaUrl ?? "/projects",
     mediaType: settings?.mediaType === "video" ? ("video" as const) : ("image" as const),
     imageUrl: settings
-      ? settings.imageWebUrl ?? settings.imageUrl ?? null
+      ? settings.imageWebUrl ?? settings.imageUrl ?? settings.imageThumbnailUrl ?? settings.imageOriginalUrl ?? null
       : "/api/uploads/architecture-residence-dusk.png",
+    imageSources: settings
+      ? [settings.imageUrl, settings.imageThumbnailUrl, settings.imageOriginalUrl]
+      : [],
     videoUrl: settings?.videoUrl ?? null,
   };
 }
@@ -37,7 +40,12 @@ export default async function HomePage() {
 
   return (
     <section className="relative h-screen overflow-hidden bg-charcoal">
-      <HeroMedia mediaType={hero.mediaType} imageUrl={hero.imageUrl} videoUrl={hero.videoUrl} />
+      <HeroMedia
+        mediaType={hero.mediaType}
+        imageUrl={hero.imageUrl}
+        imageSources={hero.imageSources}
+        videoUrl={hero.videoUrl}
+      />
       <div className="absolute inset-0 z-10 flex items-center justify-center px-6 pt-16">
         <HeroContent
           title={hero.title}

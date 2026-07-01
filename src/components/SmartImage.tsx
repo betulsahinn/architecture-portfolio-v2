@@ -1,116 +1,170 @@
 "use client";
 
-import NextImage, { type ImageProps } from "next/image";
-import { useEffect, useRef, useState } from "react";
-import type { CSSProperties, SyntheticEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type {
+  CSSProperties,
+  ImgHTMLAttributes,
+  SyntheticEvent,
+} from "react";
+import { normalizeMediaUrl } from "@/lib/media-url";
 
-const RETRY_DELAYS = [500, 1500, 3000] as const;
-type SmartImageProps = ImageProps & { fallbackLabel?: string };
+const RETRY_DELAYS = [800, 2000] as const;
 
-function sourceUrl(src: ImageProps["src"]): string {
-  if (typeof src === "string") return src;
-  return "src" in src ? src.src : src.default.src;
+type NativeImageProps = Omit<
+  ImgHTMLAttributes<HTMLImageElement>,
+  "src" | "onLoad" | "onError"
+>;
+
+export type SmartImageProps = NativeImageProps & {
+  src: string;
+  sources?: Array<string | null | undefined>;
+  fill?: boolean;
+  priority?: boolean;
+  fallbackLabel?: string;
+  fallbackClassName?: string;
+  onLoad?: (event: SyntheticEvent<HTMLImageElement>) => void;
+  onError?: (event: SyntheticEvent<HTMLImageElement>) => void;
+  onFinalError?: () => void;
+};
+
+function retryUrl(src: string, retry: number): string {
+  try {
+    const url = new URL(src, window.location.origin);
+    url.searchParams.set("media_retry", String(retry));
+    return src.startsWith("/") ? `${url.pathname}${url.search}${url.hash}` : url.toString();
+  } catch {
+    return src;
+  }
 }
 
-function isR2Url(src: string): boolean {
-  const publicUrl = process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL?.replace(/\/+$/, "");
-  return (
-    src.includes(".r2.dev") ||
-    src.startsWith("https://pub-") ||
-    Boolean(publicUrl && (src === publicUrl || src.startsWith(`${publicUrl}/`)))
-  );
-}
-
-function retryUrl(src: string, attempt: number): string {
-  const url = new URL(src);
-  url.searchParams.set("retry", String(attempt));
-  return url.toString();
-}
-
-export function SmartImage({ fallbackLabel = "Image unavailable", ...props }: SmartImageProps) {
-  const src = sourceUrl(props.src);
-  const r2 = isR2Url(src);
-  const [attempt, setAttempt] = useState(0);
-  const [state, setState] = useState<"loading" | "retrying" | "loaded" | "failed">("loading");
+/**
+ * A browser-native image with a bounded fallback plan. It deliberately never
+ * uses the Next.js image optimizer, so R2 objects cannot become /_next/image
+ * requests in production.
+ */
+export function SmartImage({
+  src,
+  sources = [],
+  fill = false,
+  priority = false,
+  fallbackLabel,
+  fallbackClassName = "bg-stone/25",
+  onLoad,
+  onError,
+  onFinalError,
+  className = "",
+  style,
+  loading,
+  decoding = "async",
+  fetchPriority,
+  width,
+  height,
+  alt = "",
+  ...props
+}: SmartImageProps) {
+  const sourceKey = [src, ...sources].join("\u001f");
+  const candidates = useMemo(() => {
+    const normalized = [src, ...sources]
+      .map(normalizeMediaUrl)
+      .filter((url): url is string => Boolean(url));
+    return [...new Set(normalized)].slice(0, RETRY_DELAYS.length + 1);
+    // sourceKey captures the string values without making callers memoize arrays.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sourceKey]);
+  const [candidateIndex, setCandidateIndex] = useState(0);
+  const [retryCount, setRetryCount] = useState(0);
+  const [state, setState] = useState<"loading" | "loaded" | "failed">("loading");
   const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
-    setAttempt(0);
+    setCandidateIndex(0);
+    setRetryCount(0);
     setState("loading");
     if (retryTimer.current) clearTimeout(retryTimer.current);
     return () => {
       if (retryTimer.current) clearTimeout(retryTimer.current);
     };
-  }, [src]);
+  }, [sourceKey]);
+
+  const baseUrl = candidates[candidateIndex] ?? "";
+  const effectiveUrl =
+    retryCount > 0 && candidateIndex === 0 && candidates.length === 1
+      ? retryUrl(baseUrl, retryCount)
+      : baseUrl;
 
   useEffect(() => {
     const image = imageRef.current;
-    if (r2 && image?.complete && image.naturalWidth > 0) setState("loaded");
-  }, [attempt, r2, src]);
+    if (image?.complete && image.naturalWidth > 0) setState("loaded");
+  }, [effectiveUrl]);
 
-  if (!r2) return <NextImage {...props} />;
-
-  const fillStyle: CSSProperties | undefined = props.fill
-    ? { position: "absolute", inset: 0, width: "100%", height: "100%", ...props.style }
-    : props.style;
+  const fillStyle: CSSProperties | undefined = fill
+    ? { position: "absolute", inset: 0, width: "100%", height: "100%", ...style }
+    : style;
 
   function handleLoad(event: SyntheticEvent<HTMLImageElement>) {
     if (retryTimer.current) clearTimeout(retryTimer.current);
+    retryTimer.current = null;
     setState("loaded");
-    props.onLoad?.(event);
+    onLoad?.(event);
   }
 
   function handleError(event: SyntheticEvent<HTMLImageElement>) {
-    props.onError?.(event);
-    if (attempt >= RETRY_DELAYS.length) {
+    onError?.(event);
+    if (retryTimer.current) return;
+
+    if (retryCount >= RETRY_DELAYS.length) {
       setState("failed");
+      onFinalError?.();
       return;
     }
 
-    setState("retrying");
+    setState("loading");
+    const nextRetry = retryCount + 1;
     retryTimer.current = setTimeout(() => {
-      setAttempt((current) => current + 1);
-      setState("loading");
-    }, RETRY_DELAYS[attempt]);
+      retryTimer.current = null;
+      setRetryCount(nextRetry);
+      setCandidateIndex((current) =>
+        current + 1 < candidates.length ? current + 1 : current,
+      );
+    }, RETRY_DELAYS[retryCount]);
   }
 
-  if (state === "failed") {
+  if (!effectiveUrl || state === "failed") {
     return (
       <div
-        role="img"
-        aria-label={props.alt}
-        className={`flex items-center justify-center bg-stone/25 text-center text-xs text-warm-gray ${props.className ?? ""}`}
+        role={fallbackLabel ? "img" : undefined}
+        aria-label={fallbackLabel ? alt : undefined}
+        aria-hidden={fallbackLabel ? undefined : true}
+        className={`flex items-center justify-center ${fallbackClassName} ${className}`}
         style={{
           ...fillStyle,
-          ...(!props.fill && props.width && props.height
-            ? { aspectRatio: `${props.width} / ${props.height}` }
-            : {}),
+          ...(!fill && width && height ? { aspectRatio: `${width} / ${height}` } : {}),
         }}
       >
-        <span className="px-4">{fallbackLabel}</span>
+        {fallbackLabel ? <span className="px-4 text-center text-xs text-warm-gray">{fallbackLabel}</span> : null}
       </div>
     );
   }
 
   return (
-    // R2 public objects intentionally bypass the Next.js image optimizer.
+    // Public and admin media use the same direct R2 URL path.
     // eslint-disable-next-line @next/next/no-img-element
     <img
+      {...props}
       ref={imageRef}
-      key={`${src}-${attempt}`}
-      src={attempt === 0 ? src : retryUrl(src, attempt)}
-      alt={props.alt}
-      className={`${props.className ?? ""} transition-opacity duration-150 ${state === "loaded" ? "bg-transparent opacity-100 grayscale-0 brightness-100 blur-none" : state === "retrying" ? "opacity-0" : "bg-stone/20 opacity-100"}`}
-      loading={props.loading ?? (props.priority ? "eager" : "lazy")}
-      fetchPriority={props.priority ? "high" : props.fetchPriority}
-      width={props.fill ? undefined : props.width}
-      height={props.fill ? undefined : props.height}
-      sizes={props.sizes}
+      key={`${effectiveUrl}-${retryCount}`}
+      src={effectiveUrl}
+      alt={alt}
+      className={`${className} transition-opacity duration-300 ${
+        state === "loaded" ? "opacity-100" : "animate-pulse bg-stone/25 opacity-70"
+      }`}
+      loading={loading ?? (priority ? "eager" : "lazy")}
+      fetchPriority={fetchPriority ?? (priority ? "high" : "auto")}
+      decoding={decoding}
+      width={fill ? undefined : width}
+      height={fill ? undefined : height}
       style={{ ...fillStyle, color: "transparent", fontSize: 0 }}
-      decoding={props.decoding ?? "async"}
-      crossOrigin={props.crossOrigin}
-      referrerPolicy={props.referrerPolicy}
       onLoad={handleLoad}
       onError={handleError}
     />

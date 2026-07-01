@@ -19,7 +19,12 @@ type FilterProject = {
   location: string | null;
   year: number | null;
   featured: boolean;
-  images: { url: string; thumbnailUrl: string | null }[];
+  images: {
+    url: string;
+    thumbnailUrl: string | null;
+    webUrl: string | null;
+    originalUrl: string | null;
+  }[];
   categories: { category: CategoryFilterOption }[];
 };
 
@@ -82,7 +87,17 @@ export function ProjectFilterGrid({ projects, categories: categoryOptions, langu
               year={project.year}
               categories={getCategoryNames(project, language)}
               language={language}
-              imageUrl={project.images[0]?.thumbnailUrl ?? project.images[0]?.url}
+              imageUrl={
+                project.images[0]?.thumbnailUrl ??
+                project.images[0]?.webUrl ??
+                project.images[0]?.url ??
+                undefined
+              }
+              imageSources={project.images[0] ? [
+                project.images[0].webUrl,
+                project.images[0].url,
+                project.images[0].originalUrl,
+              ] : []}
               featured={project.featured}
               index={index}
             />

@@ -36,14 +36,16 @@ export default async function AboutPage() {
             </p>
           </div>
 
-          {settings.imageUrl && (
+          {(settings.imageWebUrl ?? settings.imageUrl ?? settings.imageOriginalUrl) && (
             <div className="relative aspect-[4/3] overflow-hidden bg-stone">
               <SmartImage
-                src={settings.imageUrl}
+                src={settings.imageWebUrl ?? settings.imageUrl ?? settings.imageOriginalUrl!}
+                sources={[settings.imageUrl, settings.imageOriginalUrl]}
                 alt={`${BRAND_NAME} studio interior`}
                 fill
                 className="object-cover"
                 sizes="(max-width: 1024px) 100vw, 50vw"
+                loading="lazy"
               />
             </div>
           )}

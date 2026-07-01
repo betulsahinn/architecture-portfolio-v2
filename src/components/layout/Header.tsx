@@ -43,7 +43,8 @@ export function Header({ initialLanguage }: { initialLanguage: Language }) {
             alt="Mehmet Eser Interior Design Studio"
             width={800}
             height={200}
-            priority={isHome}
+            loading="eager"
+            fetchPriority="auto"
             className={cn("h-12 w-auto object-contain md:h-14", !isHome && "invert")}
             sizes="(max-width: 768px) 192px, 224px"
           />

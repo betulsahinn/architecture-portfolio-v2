@@ -13,6 +13,7 @@ type ProjectCardProps = {
   year?: number | null;
   categories?: string[];
   imageUrl?: string;
+  imageSources?: Array<string | null | undefined>;
   featured?: boolean;
   index?: number;
   language: Language;
@@ -25,6 +26,7 @@ export function ProjectCard({
   year,
   categories = [],
   imageUrl,
+  imageSources = [],
   index = 0,
   language,
 }: ProjectCardProps) {
@@ -40,6 +42,7 @@ export function ProjectCard({
           {imageUrl ? (
             <SmartImage
               src={imageUrl}
+              sources={imageSources}
               alt={generateProjectImageAlt({
                 title,
                 categories: categories.map((name) => ({ name })),
@@ -50,11 +53,11 @@ export function ProjectCard({
               fill
               className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.035]"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              loading={index < 4 ? "eager" : "lazy"}
-              priority={index < 4}
+              loading={index === 0 ? "eager" : "lazy"}
+              priority={index === 0}
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-warm-gray">No image</div>
+            <div className="h-full bg-stone/25" aria-hidden="true" />
           )}
           <div className="pointer-events-none absolute inset-0 bg-charcoal/10 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
         </div>

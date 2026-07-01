@@ -2,67 +2,101 @@
 
 import { useEffect, useState } from "react";
 import { SmartImage } from "@/components/SmartImage";
+import { normalizeMediaUrl } from "@/lib/media-url";
 
 type HeroMediaProps = {
   mediaType: "image" | "video";
   imageUrl: string | null;
+  imageSources?: Array<string | null | undefined>;
   videoUrl: string | null;
 };
 
-type ResolvedMedia = "image" | "video" | "empty";
-
-function resolveMedia(mediaType: HeroMediaProps["mediaType"], imageUrl: string | null, videoUrl: string | null): ResolvedMedia {
-  if (mediaType === "video") {
-    if (videoUrl) return "video";
-    if (imageUrl) return "image";
-  } else {
-    if (imageUrl) return "image";
-    if (videoUrl) return "video";
-  }
-
-  return "empty";
-}
-
-export function HeroMedia({ mediaType, imageUrl, videoUrl }: HeroMediaProps) {
-  const [activeMedia, setActiveMedia] = useState<ResolvedMedia>(() => resolveMedia(mediaType, imageUrl, videoUrl));
+export function HeroMedia({
+  mediaType,
+  imageUrl,
+  imageSources = [],
+  videoUrl,
+}: HeroMediaProps) {
+  const safeVideoUrl = normalizeMediaUrl(videoUrl);
+  const wantsVideo = Boolean(
+    safeVideoUrl && (mediaType === "video" || !imageUrl),
+  );
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
+  const [posterLoaded, setPosterLoaded] = useState(false);
+  const [posterFailed, setPosterFailed] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
+  const [videoTimedOut, setVideoTimedOut] = useState(false);
 
   useEffect(() => {
-    setActiveMedia(resolveMedia(mediaType, imageUrl, videoUrl));
-  }, [imageUrl, mediaType, videoUrl]);
+    const mediaQuery = window.matchMedia("(max-width: 767px), (pointer: coarse)");
+    const update = () => setIsMobile(mediaQuery.matches);
+    update();
+    mediaQuery.addEventListener?.("change", update);
+    return () => mediaQuery.removeEventListener?.("change", update);
+  }, []);
 
-  if (activeMedia === "video" && videoUrl) {
-    return (
-      <video
-        key={videoUrl}
-        src={videoUrl}
-        className="absolute inset-0 h-full w-full object-cover"
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        onError={() => setActiveMedia(imageUrl ? "image" : "empty")}
-      />
-    );
-  }
+  useEffect(() => {
+    setPosterLoaded(false);
+    setPosterFailed(false);
+    setVideoReady(false);
+    setVideoFailed(false);
+    setVideoTimedOut(false);
+  }, [imageUrl, mediaType, safeVideoUrl]);
 
-  if (activeMedia === "image" && imageUrl) {
-    return (
-      <SmartImage
-        src={imageUrl}
-        alt="Homepage hero"
-        fill
-        priority
-        className="object-cover"
-        sizes="100vw"
-      />
-    );
-  }
+  const shouldLoadVideo = Boolean(
+    wantsVideo &&
+      !videoFailed &&
+      isMobile !== null &&
+      (isMobile === false || posterLoaded || posterFailed || !imageUrl),
+  );
+
+  useEffect(() => {
+    if (!shouldLoadVideo || !isMobile || videoReady) return;
+    const timer = window.setTimeout(() => setVideoTimedOut(true), 3000);
+    return () => window.clearTimeout(timer);
+  }, [isMobile, shouldLoadVideo, videoReady]);
 
   return (
-    <div
-      className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(163,137,104,0.22),transparent_45%),linear-gradient(145deg,#2b2926,#151412)]"
-      aria-hidden="true"
-    />
+    <>
+      <div
+        className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(163,137,104,0.22),transparent_45%),linear-gradient(145deg,#2b2926,#151412)]"
+        aria-hidden="true"
+      />
+
+      {imageUrl ? (
+        <SmartImage
+          src={imageUrl}
+          sources={imageSources}
+          alt="Homepage hero"
+          fill
+          priority
+          className="object-cover"
+          fallbackClassName="bg-transparent"
+          sizes="100vw"
+          onLoad={() => setPosterLoaded(true)}
+          onFinalError={() => setPosterFailed(true)}
+        />
+      ) : null}
+
+      {shouldLoadVideo && safeVideoUrl ? (
+        <video
+          key={safeVideoUrl}
+          src={safeVideoUrl}
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
+            videoReady && !videoTimedOut ? "opacity-100" : "opacity-0"
+          }`}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          onCanPlay={() => {
+            if (!videoTimedOut) setVideoReady(true);
+          }}
+          onError={() => setVideoFailed(true)}
+        />
+      ) : null}
+    </>
   );
 }

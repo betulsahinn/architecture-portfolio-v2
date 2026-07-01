@@ -38,7 +38,7 @@ export default async function ReferencesPage() {
         ) : (
           <div className="mt-20 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {references.map((reference) => {
-              const logoUrl = reference.logoWebUrl ?? reference.logoUrl;
+              const logoUrl = reference.logoUrl ?? reference.logoWebUrl ?? reference.logoThumbnailUrl;
               const content = (
                 <div className="group flex min-h-[220px] flex-col justify-between border border-stone/70 bg-cream p-8 transition-colors hover:border-accent/50 hover:bg-white">
                   <div className="flex min-h-[96px] items-center justify-center">
@@ -46,10 +46,13 @@ export default async function ReferencesPage() {
                       <div className="relative h-24 w-full">
                         <SmartImage
                           src={logoUrl}
+                          sources={[reference.logoWebUrl, reference.logoThumbnailUrl]}
                           alt={`${reference.companyName} logo`}
                           fill
                           className="object-contain transition-transform duration-500 group-hover:scale-[1.03]"
                           sizes="(max-width: 768px) 100vw, 33vw"
+                          loading="lazy"
+                          decoding="async"
                         />
                       </div>
                     ) : (

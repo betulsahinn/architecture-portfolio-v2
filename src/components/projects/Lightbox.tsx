@@ -3,12 +3,12 @@
 import { useEffect, useCallback } from "react";
 import { SmartImage } from "@/components/SmartImage";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Language } from "@/lib/i18n";
-
 type LightboxImage = {
   id: string;
   url: string;
   webUrl?: string | null;
+  thumbnailUrl?: string | null;
+  originalUrl?: string | null;
   alt: string | null;
 };
 
@@ -18,12 +18,11 @@ type LightboxProps = {
   onClose: () => void;
   onNext: () => void;
   onPrev: () => void;
-  language: Language;
 };
 
-export function Lightbox({ images, currentIndex, onClose, onNext, onPrev, language }: LightboxProps) {
+export function Lightbox({ images, currentIndex, onClose, onNext, onPrev }: LightboxProps) {
   const current = images[currentIndex];
-  const currentUrl = current.webUrl ?? current.url;
+  const currentUrl = current.webUrl ?? current.originalUrl ?? current.url;
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -102,12 +101,12 @@ export function Lightbox({ images, currentIndex, onClose, onNext, onPrev, langua
         >
           <SmartImage
             src={currentUrl}
+            sources={[current.originalUrl, current.url, current.thumbnailUrl]}
             alt={current.alt ?? "Project image"}
             width={1600}
             height={1200}
             className="max-h-[84vh] w-auto object-contain shadow-[0_30px_90px_rgba(0,0,0,0.45)]"
             priority
-            fallbackLabel={language === "tr" ? "Görsel yüklenemedi" : "Image unavailable"}
           />
           <p className="mt-5 text-xs uppercase tracking-[0.22em] text-cream/55">
             {currentIndex + 1} / {images.length}
