@@ -1,0 +1,53 @@
+import { HeroMedia } from "@/components/home/HeroMedia";
+import { HeroContent } from "@/components/home/HeroContent";
+import { prisma } from "@/lib/prisma";
+import { getServerLanguage } from "@/lib/i18n-server";
+import { toLanguageUppercase, translations } from "@/lib/i18n";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+const HERO_ID = "homepage";
+
+async function getHeroSettings() {
+  const [language, settings] = await Promise.all([
+    getServerLanguage(),
+    prisma.homepageHero.findUnique({ where: { id: HERO_ID } }),
+  ]);
+
+  const t = translations[language];
+
+  return {
+    eyebrow: toLanguageUppercase(t.home.eyebrow, language),
+    language,
+    title: settings?.title ?? undefined,
+    subtitle: settings?.subtitle ?? undefined,
+    ctaLabel: settings?.ctaLabel ?? undefined,
+    ctaUrl: settings?.ctaUrl ?? "/projects",
+    mediaType: settings?.mediaType === "video" ? ("video" as const) : ("image" as const),
+    imageUrl: settings
+      ? settings.imageWebUrl ?? settings.imageUrl ?? null
+      : "/api/uploads/architecture-residence-dusk.png",
+    videoUrl: settings?.videoUrl ?? null,
+  };
+}
+
+export default async function HomePage() {
+  const hero = await getHeroSettings();
+
+  return (
+    <section className="relative h-screen overflow-hidden bg-charcoal">
+      <HeroMedia mediaType={hero.mediaType} imageUrl={hero.imageUrl} videoUrl={hero.videoUrl} />
+      <div className="absolute inset-0 z-10 flex items-center justify-center px-6 pt-16">
+        <HeroContent
+          title={hero.title}
+          eyebrow={hero.eyebrow}
+          description={hero.subtitle}
+          href={hero.ctaUrl}
+          ctaLabel={hero.ctaLabel}
+          language={hero.language}
+        />
+      </div>
+    </section>
+  );
+}
