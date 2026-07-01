@@ -39,7 +39,7 @@ export function Header({ initialLanguage }: { initialLanguage: Language }) {
           className="block shrink-0 leading-none"
         >
           <SmartImage
-            src="/uploads/lander-logo.png"
+            src="/brand/mehmet-eser-logo.png"
             alt="Mehmet Eser Interior Design Studio"
             width={800}
             height={200}
