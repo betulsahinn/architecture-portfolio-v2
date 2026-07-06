@@ -27,9 +27,6 @@ export function Footer({
             <p className="font-display text-[1.7rem] leading-none tracking-[0.03em]">
               {footer.brandTitle}
             </p>
-            <p className="mt-4 max-w-[300px] text-[0.68rem] leading-5 text-stone/55">
-              © {currentYear} {BRAND_NAME}. {t.footer.rightsReserved}
-            </p>
             <p className="mt-7 max-w-[280px] text-sm leading-7 text-stone/75">
               {footer.description}
             </p>
@@ -72,16 +69,22 @@ export function Footer({
               <FooterContactLink href={footerSettings.instagramUrl} icon="instagram" external>
                 {footerSettings.instagramHandle || "Instagram"}
               </FooterContactLink>
-              <a
-                href="https://wa.me/905312486870"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ml-8 inline-flex pt-3 text-[0.62rem] font-semibold uppercase tracking-[0.22em] text-stone/55 transition-colors hover:text-accent"
-              >
-                BETÜL ŞAHİN YAZILIM
-              </a>
             </div>
           </div>
+        </div>
+
+        <div className="flex flex-col items-center px-4 py-10 text-center md:py-12">
+          <p className="text-[0.68rem] leading-5 text-stone/60">
+            © {currentYear} {BRAND_NAME}. {t.footer.rightsReserved}
+          </p>
+          <a
+            href="https://wa.me/905312486870"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 text-[0.6rem] font-semibold uppercase tracking-[0.24em] text-stone/50 transition-colors hover:text-accent"
+          >
+            BETÜL ŞAHİN YAZILIM
+          </a>
         </div>
       </div>
     </footer>
