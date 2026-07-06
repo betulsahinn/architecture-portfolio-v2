@@ -43,6 +43,7 @@ type ProjectFilterGridProps = {
 
 export function ProjectFilterGrid({ projects, categories: categoryOptions, language }: ProjectFilterGridProps) {
   const t = translations[language];
+  const filterLabel = language === "tr" ? "Projeleri filtrele" : "Filter projects";
   const categories = [
     { key: "All", label: t.common.all },
     ...categoryOptions.map((category) => ({
@@ -59,7 +60,31 @@ export function ProjectFilterGrid({ projects, categories: categoryOptions, langu
 
   return (
     <>
-      <div className="mt-24 flex flex-wrap gap-6 border-b border-stone pb-11">
+      <div className="mt-20 border-b border-stone pb-8 md:mt-24 md:hidden">
+        <label className="block text-[0.62rem] font-semibold uppercase tracking-[0.32em] text-warm-gray">
+          {toLanguageUppercase(filterLabel, language)}
+        </label>
+        <div className="relative mt-4">
+          <select
+            value={activeCategory}
+            onChange={(event) => setActiveCategory(event.target.value)}
+            aria-label={filterLabel}
+            className="w-full appearance-none truncate rounded-none border border-stone/70 bg-cream px-4 py-4 pr-12 text-xs font-semibold uppercase tracking-[0.22em] text-charcoal outline-none transition-colors focus:border-accent"
+          >
+            {categories.map((category) => (
+              <option key={category.key} value={category.key}>
+                {toLanguageUppercase(category.label, language)}
+              </option>
+            ))}
+          </select>
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute right-4 top-1/2 h-2 w-2 -translate-y-2 rotate-45 border-b border-r border-accent"
+          />
+        </div>
+      </div>
+
+      <div className="mt-24 hidden flex-wrap gap-6 border-b border-stone pb-11 md:flex">
         {categories.map((category) => (
           <button
             key={category.key}

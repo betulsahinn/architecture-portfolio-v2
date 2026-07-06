@@ -3,7 +3,7 @@
 import { SmartImage } from "@/components/SmartImage";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { toLanguageUppercase, translations, type Language } from "@/lib/i18n";
@@ -20,12 +20,65 @@ const navLinks = [
 export function Header({ initialLanguage }: { initialLanguage: Language }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const headerRef = useRef<HTMLElement | null>(null);
   const { language, setLanguage } = useLanguagePreference(initialLanguage);
   const t = translations[language];
   const isHome = pathname === "/";
 
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const passiveCaptureOptions = { capture: true, passive: true } as const;
+
+    function closeMobileMenu() {
+      setMobileOpen(false);
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (headerRef.current?.contains(target)) return;
+
+      closeMobileMenu();
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        closeMobileMenu();
+      }
+    }
+
+    function handlePointerMove(event: PointerEvent) {
+      if (event.pointerType === "touch" || event.pointerType === "pen") {
+        closeMobileMenu();
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("pointermove", handlePointerMove, passiveCaptureOptions);
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("scroll", closeMobileMenu, passiveCaptureOptions);
+    document.addEventListener("wheel", closeMobileMenu, passiveCaptureOptions);
+    document.addEventListener("touchmove", closeMobileMenu, passiveCaptureOptions);
+    window.addEventListener("scroll", closeMobileMenu, { passive: true });
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("pointermove", handlePointerMove, passiveCaptureOptions);
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("scroll", closeMobileMenu, passiveCaptureOptions);
+      document.removeEventListener("wheel", closeMobileMenu, passiveCaptureOptions);
+      document.removeEventListener("touchmove", closeMobileMenu, passiveCaptureOptions);
+      window.removeEventListener("scroll", closeMobileMenu);
+    };
+  }, [mobileOpen]);
+
   return (
     <header
+      ref={headerRef}
       lang={language}
       className={cn(
         "fixed inset-x-0 top-0 z-50 transition-colors duration-500",
@@ -36,6 +89,7 @@ export function Header({ initialLanguage }: { initialLanguage: Language }) {
         <Link
           href="/"
           aria-label="Mehmet Eser Interior Design Studio homepage"
+          onClick={() => setMobileOpen(false)}
           className="block shrink-0 leading-none"
         >
           <SmartImage
