@@ -4,6 +4,24 @@ import { useEffect, useState } from "react";
 import { SmartImage } from "@/components/SmartImage";
 import { normalizeMediaUrl } from "@/lib/media-url";
 
+const HERO_VIDEO_READY_KEY = "heroVideoReady";
+
+function wasVideoReadyInSession(videoUrl: string): boolean {
+  try {
+    return window.sessionStorage.getItem(HERO_VIDEO_READY_KEY) === videoUrl;
+  } catch {
+    return false;
+  }
+}
+
+function rememberReadyVideo(videoUrl: string) {
+  try {
+    window.sessionStorage.setItem(HERO_VIDEO_READY_KEY, videoUrl);
+  } catch {
+    // Storage can be unavailable in restrictive/private browser modes.
+  }
+}
+
 type HeroMediaProps = {
   mediaType: "image" | "video";
   imageUrl: string | null;
@@ -18,6 +36,7 @@ export function HeroMedia({
   videoUrl,
 }: HeroMediaProps) {
   const safeVideoUrl = normalizeMediaUrl(videoUrl);
+  const safePosterUrl = normalizeMediaUrl(imageUrl);
   const wantsVideo = Boolean(
     safeVideoUrl && (mediaType === "video" || !imageUrl),
   );
@@ -25,6 +44,7 @@ export function HeroMedia({
   const [posterLoaded, setPosterLoaded] = useState(false);
   const [posterFailed, setPosterFailed] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
+  const [sessionVideoReady, setSessionVideoReady] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
   const [videoTimedOut, setVideoTimedOut] = useState(false);
 
@@ -40,6 +60,9 @@ export function HeroMedia({
     setPosterLoaded(false);
     setPosterFailed(false);
     setVideoReady(false);
+    setSessionVideoReady(
+      Boolean(safeVideoUrl && wasVideoReadyInSession(safeVideoUrl)),
+    );
     setVideoFailed(false);
     setVideoTimedOut(false);
   }, [imageUrl, mediaType, safeVideoUrl]);
@@ -48,7 +71,12 @@ export function HeroMedia({
     wantsVideo &&
       !videoFailed &&
       isMobile !== null &&
-      (isMobile === false || posterLoaded || posterFailed || !imageUrl),
+      (isMobile === false || sessionVideoReady || posterLoaded || posterFailed || !imageUrl),
+  );
+
+  const showVideo = Boolean(
+    !videoTimedOut &&
+      (videoReady || (isMobile === true && sessionVideoReady)),
   );
 
   useEffect(() => {
@@ -83,8 +111,9 @@ export function HeroMedia({
         <video
           key={safeVideoUrl}
           src={safeVideoUrl}
+          poster={safePosterUrl ?? undefined}
           className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
-            videoReady && !videoTimedOut ? "opacity-100" : "opacity-0"
+            showVideo ? "opacity-100" : "opacity-0"
           }`}
           autoPlay
           muted
@@ -92,7 +121,11 @@ export function HeroMedia({
           playsInline
           preload="metadata"
           onCanPlay={() => {
-            if (!videoTimedOut) setVideoReady(true);
+            if (!videoTimedOut) {
+              setVideoReady(true);
+              setSessionVideoReady(true);
+              rememberReadyVideo(safeVideoUrl);
+            }
           }}
           onError={() => setVideoFailed(true)}
         />

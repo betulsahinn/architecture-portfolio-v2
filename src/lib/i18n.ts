@@ -89,6 +89,7 @@ export const translations = {
     footer: {
       description:
         "Gaziantep merkezli iç mimarlık stüdyosu; malzeme, oran ve sakin detaylarla rafine mekanlar tasarlar.",
+      rightsReserved: "Tüm hakları saklıdır.",
     },
   },
   en: {
@@ -174,6 +175,7 @@ export const translations = {
     footer: {
       description:
         "Interior architecture studio in Gaziantep, shaping refined spaces through material, proportion, and quiet detail.",
+      rightsReserved: "All rights reserved.",
     },
   },
 } as const;

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { toLanguageUppercase, translations, type Language } from "@/lib/i18n";
+import { BRAND_NAME, toLanguageUppercase, translations, type Language } from "@/lib/i18n";
 import { useLanguagePreference } from "@/lib/use-language";
 import { getLocalizedFooter, getPhoneHref, type FooterSettingsView } from "@/lib/site-settings";
 
@@ -17,6 +17,7 @@ export function Footer({
   const t = translations[language];
   const footer = getLocalizedFooter(footerSettings, language);
   const phoneHref = getPhoneHref(footerSettings.phone);
+  const currentYear = new Date().getFullYear();
 
   return (
     <footer lang={language} className="bg-charcoal px-6 pb-6 pt-24 text-cream md:px-10 md:pt-28">
@@ -25,6 +26,9 @@ export function Footer({
           <div>
             <p className="font-display text-[1.7rem] leading-none tracking-[0.03em]">
               {footer.brandTitle}
+            </p>
+            <p className="mt-4 max-w-[300px] text-[0.68rem] leading-5 text-stone/55">
+              © {currentYear} {BRAND_NAME}. {t.footer.rightsReserved}
             </p>
             <p className="mt-7 max-w-[280px] text-sm leading-7 text-stone/75">
               {footer.description}
@@ -68,6 +72,14 @@ export function Footer({
               <FooterContactLink href={footerSettings.instagramUrl} icon="instagram" external>
                 {footerSettings.instagramHandle || "Instagram"}
               </FooterContactLink>
+              <a
+                href="https://wa.me/905312486870"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-8 inline-flex pt-3 text-[0.62rem] font-semibold uppercase tracking-[0.22em] text-stone/55 transition-colors hover:text-accent"
+              >
+                BETÜL ŞAHİN YAZILIM
+              </a>
             </div>
           </div>
         </div>
