@@ -152,6 +152,15 @@ NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL="https://cdn.example.com"
 
 `CLOUDFLARE_R2_ENDPOINT` is used for authenticated operations. Browser-facing URLs and database values use `CLOUDFLARE_R2_PUBLIC_URL`. Legacy `/api/uploads` seed assets remain readable, while new admin uploads go to R2.
 
+To change only an existing R2 public URL base in PostgreSQL, set `DATABASE_URL`, `DIRECT_URL`, `OLD_R2_PUBLIC_URL`, and `NEW_R2_PUBLIC_URL`. Review the read-only plan before running the transactional update:
+
+```bash
+npm run migrate:r2-public-url:dry-run
+npm run migrate:r2-public-url
+```
+
+The migration scans only schema-defined media URL fields, preserves every character after the old base, and never calls the R2 API.
+
 ## Commands
 
 | Command | Purpose |
@@ -161,6 +170,8 @@ NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL="https://cdn.example.com"
 | `npm run dev:pg` | Generate the PostgreSQL client and test locally against Neon |
 | `npm run build` | Generate the matching Prisma Client and make a production build |
 | `npm run build:pg` | Force a PostgreSQL client and production build |
+| `npm run migrate:r2-public-url:dry-run` | Preview the database-only R2 public URL replacement |
+| `npm run migrate:r2-public-url` | Transactionally replace and verify the R2 public URL base |
 | `npm run prisma:generate` | Generate Prisma Client for the configured `DATABASE_URL` |
 | `npm run prisma:generate:local` | Generate Prisma Client explicitly for local SQLite |
 | `npm run prisma:generate:sqlite` | Generate Prisma Client explicitly for SQLite |

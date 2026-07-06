@@ -22,6 +22,8 @@
     "migrate:data:pg:dry-run": "node scripts/generate-postgres-migration-client.mjs && tsx scripts/migrate-sqlite-to-postgres.ts --dry-run",
     "migrate:data:pg": "node scripts/generate-postgres-migration-client.mjs && tsx scripts/migrate-sqlite-to-postgres.ts --execute",
     "migrate:uploads-to-r2": "tsx scripts/migrate-uploads-to-r2.ts",
+    "migrate:r2-public-url:dry-run": "node scripts/prisma-cli.mjs generate --postgres && tsx scripts/migrate-r2-public-url.ts --dry-run",
+    "migrate:r2-public-url": "node scripts/prisma-cli.mjs generate --postgres && tsx scripts/migrate-r2-public-url.ts --execute",
     "postinstall": "node scripts/prisma-cli.mjs generate"
   },
   "dependencies": {
