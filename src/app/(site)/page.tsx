@@ -2,7 +2,7 @@ import { HeroMedia } from "@/components/home/HeroMedia";
 import { HeroContent } from "@/components/home/HeroContent";
 import { prisma } from "@/lib/prisma";
 import { getServerLanguage } from "@/lib/i18n-server";
-import { toLanguageUppercase, translations } from "@/lib/i18n";
+import { translations } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -18,7 +18,7 @@ async function getHeroSettings() {
   const t = translations[language];
 
   return {
-    eyebrow: toLanguageUppercase(t.home.eyebrow, language),
+    eyebrow: t.home.eyebrow.toLocaleUpperCase("en-US"),
     language,
     title: settings?.title ?? undefined,
     subtitle: settings?.subtitle ?? undefined,

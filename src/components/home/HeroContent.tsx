@@ -25,9 +25,9 @@ export function HeroContent({ title, logoSrc, logoAlt, eyebrow, description, hre
       initial={{ opacity: 0, y: 28 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.9, ease: "easeOut" }}
-      className="mx-auto max-w-[1120px] text-center"
+      className="absolute inset-x-0 top-[73%] mx-auto w-full max-w-[1120px] px-6 text-center sm:top-[74%] md:top-[76%]"
     >
-      <p className="text-[0.72rem] font-semibold uppercase tracking-[0.48em] text-accent-light">
+      <p className="mx-auto max-w-[calc(100vw-2rem)] text-[0.78rem] font-bold uppercase tracking-[0.42em] text-accent-light drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)] sm:text-[0.86rem] sm:tracking-[0.48em] md:text-[0.95rem]">
         {eyebrow}
       </p>
       {logoSrc ? (
