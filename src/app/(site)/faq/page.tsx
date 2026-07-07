@@ -2,9 +2,21 @@ import { FaqAccordion } from "@/components/faq/FaqAccordion";
 import { listFaqs } from "@/lib/faq-service";
 import { getServerLanguage } from "@/lib/i18n-server";
 import { toLanguageUppercase, translations } from "@/lib/i18n";
+import { createPageMetadata, pageSeo } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "FAQ" };
+
+export async function generateMetadata() {
+  const language = await getServerLanguage();
+  const seo = pageSeo[language].faq;
+
+  return createPageMetadata({
+    title: seo.title,
+    description: seo.description,
+    path: "/faq",
+    language,
+  });
+}
 
 export default async function FaqPage() {
   const [language, records] = await Promise.all([getServerLanguage(), listFaqs(true)]);

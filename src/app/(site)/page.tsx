@@ -3,11 +3,24 @@ import { HeroContent } from "@/components/home/HeroContent";
 import { prisma } from "@/lib/prisma";
 import { getServerLanguage } from "@/lib/i18n-server";
 import { translations } from "@/lib/i18n";
+import { createPageMetadata, pageSeo } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const HERO_ID = "homepage";
+
+export async function generateMetadata() {
+  const language = await getServerLanguage();
+  const seo = pageSeo[language].home;
+
+  return createPageMetadata({
+    title: seo.title,
+    description: seo.description,
+    path: "/",
+    language,
+  });
+}
 
 async function getHeroSettings() {
   const [language, settings] = await Promise.all([

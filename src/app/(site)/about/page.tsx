@@ -7,12 +7,21 @@ import {
   getLocalizedAbout,
   resolveAboutSettings,
 } from "@/lib/site-settings";
+import { createPageMetadata, pageSeo } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "About",
-};
+export async function generateMetadata() {
+  const language = await getServerLanguage();
+  const seo = pageSeo[language].about;
+
+  return createPageMetadata({
+    title: seo.title,
+    description: seo.description,
+    path: "/about",
+    language,
+  });
+}
 
 export default async function AboutPage() {
   const [language, settingsRecord] = await Promise.all([

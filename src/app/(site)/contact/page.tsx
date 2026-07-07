@@ -9,13 +9,21 @@ import {
   getPhoneHref,
   resolveContactSettings,
 } from "@/lib/site-settings";
+import { createPageMetadata, pageSeo } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Contact",
-  description: `${BRAND_NAME} contact information in Gaziantep.`,
-};
+export async function generateMetadata() {
+  const language = await getServerLanguage();
+  const seo = pageSeo[language].contact;
+
+  return createPageMetadata({
+    title: seo.title,
+    description: seo.description,
+    path: "/contact",
+    language,
+  });
+}
 
 export default async function ContactPage() {
   const [language, settingsRecord] = await Promise.all([

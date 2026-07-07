@@ -2,13 +2,22 @@ import { prisma } from "@/lib/prisma";
 import { ProjectFilterGrid } from "@/components/projects/ProjectFilterGrid";
 import { getServerLanguage } from "@/lib/i18n-server";
 import { toLanguageUppercase, translations } from "@/lib/i18n";
+import { createPageMetadata, pageSeo } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export const metadata = {
-  title: "Projects",
-};
+export async function generateMetadata() {
+  const language = await getServerLanguage();
+  const seo = pageSeo[language].projects;
+
+  return createPageMetadata({
+    title: seo.title,
+    description: seo.description,
+    path: "/projects",
+    language,
+  });
+}
 
 async function getProjects() {
   return prisma.project.findMany({
