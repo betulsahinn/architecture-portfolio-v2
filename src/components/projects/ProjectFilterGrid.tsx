@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ProjectCard } from "./ProjectCard";
 import {
   getCategoryLabel,
@@ -41,22 +41,79 @@ type ProjectFilterGridProps = {
   language: Language;
 };
 
+type ProjectsRestoreRequest = {
+  category: string;
+  scrollY: number | null;
+  slug: string | null;
+};
+
+const PROJECTS_SCROLL_Y_KEY = "projectsScrollY";
+const PROJECTS_SELECTED_SLUG_KEY = "projectsSelectedSlug";
+const PROJECTS_SELECTED_CATEGORY_KEY = "projectsSelectedCategory";
+const PROJECTS_RESTORE_PENDING_KEY = "projectsRestorePending";
+
 export function ProjectFilterGrid({ projects, categories: categoryOptions, language }: ProjectFilterGridProps) {
   const t = translations[language];
   const filterLabel = language === "tr" ? "Projeleri filtrele" : "Filter projects";
-  const categories = [
-    { key: "All", label: t.common.all },
-    ...categoryOptions.map((category) => ({
-      key: category.id,
-      label: getCategoryLabel(category, language),
-    })),
-  ];
+  const categories = useMemo(
+    () => [
+      { key: "All", label: t.common.all },
+      ...categoryOptions.map((category) => ({
+        key: category.id,
+        label: getCategoryLabel(category, language),
+      })),
+    ],
+    [categoryOptions, language, t.common.all],
+  );
+  const categoryKeys = useMemo(() => new Set(categories.map((category) => category.key)), [categories]);
 
   const [activeCategory, setActiveCategory] = useState("All");
+  const [restoreRequest, setRestoreRequest] = useState<ProjectsRestoreRequest | null>(null);
   const filteredProjects =
     activeCategory === "All"
       ? projects
       : projects.filter((project) => project.categories.some(({ category }) => category.id === activeCategory));
+
+  useEffect(() => {
+    const request = readProjectsRestoreRequest(categoryKeys);
+
+    if (!request) return;
+
+    setActiveCategory(request.category);
+    setRestoreRequest(request);
+  }, [categoryKeys]);
+
+  useEffect(() => {
+    if (!restoreRequest || restoreRequest.category !== activeCategory) return;
+
+    let animationFrameId: number | null = null;
+    const timeoutId = window.setTimeout(() => {
+      animationFrameId = window.requestAnimationFrame(() => {
+        restoreProjectsPosition(restoreRequest);
+        clearProjectsRestoreState();
+        setRestoreRequest(null);
+      });
+    }, 80);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+
+      if (animationFrameId !== null) {
+        window.cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [activeCategory, filteredProjects.length, restoreRequest]);
+
+  function handleProjectSelect(slug: string) {
+    try {
+      window.sessionStorage.setItem(PROJECTS_SCROLL_Y_KEY, String(window.scrollY));
+      window.sessionStorage.setItem(PROJECTS_SELECTED_SLUG_KEY, slug);
+      window.sessionStorage.setItem(PROJECTS_SELECTED_CATEGORY_KEY, activeCategory);
+      window.sessionStorage.setItem(PROJECTS_RESTORE_PENDING_KEY, "1");
+    } catch {
+      // sessionStorage may be unavailable in private or restricted browser contexts.
+    }
+  }
 
   return (
     <>
@@ -125,6 +182,7 @@ export function ProjectFilterGrid({ projects, categories: categoryOptions, langu
               ] : []}
               featured={project.featured}
               index={index}
+              onSelect={handleProjectSelect}
             />
           ))}
         </div>
@@ -139,4 +197,51 @@ function getCategoryNames(project: FilterProject, language: Language) {
   }
 
   return [];
+}
+
+function readProjectsRestoreRequest(categoryKeys: Set<string>): ProjectsRestoreRequest | null {
+  try {
+    if (window.sessionStorage.getItem(PROJECTS_RESTORE_PENDING_KEY) !== "1") return null;
+
+    const storedCategory = window.sessionStorage.getItem(PROJECTS_SELECTED_CATEGORY_KEY) ?? "All";
+    const storedScrollY = Number(window.sessionStorage.getItem(PROJECTS_SCROLL_Y_KEY));
+
+    return {
+      category: categoryKeys.has(storedCategory) ? storedCategory : "All",
+      scrollY: Number.isFinite(storedScrollY) ? Math.max(0, storedScrollY) : null,
+      slug: window.sessionStorage.getItem(PROJECTS_SELECTED_SLUG_KEY),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function restoreProjectsPosition(request: ProjectsRestoreRequest) {
+  if (request.scrollY !== null) {
+    const maxScrollY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    const targetScrollY = Math.min(request.scrollY, maxScrollY);
+
+    window.scrollTo({ top: targetScrollY, behavior: "auto" });
+
+    if (Math.abs(request.scrollY - targetScrollY) < 120) return;
+  }
+
+  if (!request.slug) return;
+
+  const projectCard = Array.from(document.querySelectorAll<HTMLElement>("[data-project-slug]")).find(
+    (element) => element.dataset.projectSlug === request.slug,
+  );
+
+  projectCard?.scrollIntoView({ block: "center", behavior: "auto" });
+}
+
+function clearProjectsRestoreState() {
+  try {
+    window.sessionStorage.removeItem(PROJECTS_SCROLL_Y_KEY);
+    window.sessionStorage.removeItem(PROJECTS_SELECTED_SLUG_KEY);
+    window.sessionStorage.removeItem(PROJECTS_SELECTED_CATEGORY_KEY);
+    window.sessionStorage.removeItem(PROJECTS_RESTORE_PENDING_KEY);
+  } catch {
+    // Nothing to clear if sessionStorage is unavailable.
+  }
 }

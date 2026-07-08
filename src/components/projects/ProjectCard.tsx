@@ -17,6 +17,7 @@ type ProjectCardProps = {
   featured?: boolean;
   index?: number;
   language: Language;
+  onSelect?: (slug: string) => void;
 };
 
 export function ProjectCard({
@@ -29,15 +30,17 @@ export function ProjectCard({
   imageSources = [],
   index = 0,
   language,
+  onSelect,
 }: ProjectCardProps) {
   return (
     <motion.article
+      data-project-slug={slug}
       initial={{ y: 18 }}
       whileInView={{ y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.7, delay: index * 0.06, ease: "easeOut" }}
     >
-      <Link href={`/projects/${slug}`} className="group block">
+      <Link href={`/projects/${slug}`} className="group block" onClick={() => onSelect?.(slug)}>
         <div className="relative aspect-[3/4] overflow-hidden bg-[#e8e4df]">
           {imageUrl ? (
             <SmartImage

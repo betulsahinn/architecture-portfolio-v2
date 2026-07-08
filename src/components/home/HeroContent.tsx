@@ -9,7 +9,7 @@ type HeroContentProps = {
   title?: string;
   logoSrc?: string;
   logoAlt?: string;
-  eyebrow: string;
+  eyebrow?: string;
   description?: string;
   href: string;
   ctaLabel?: string;
@@ -25,11 +25,13 @@ export function HeroContent({ title, logoSrc, logoAlt, eyebrow, description, hre
       initial={{ opacity: 0, y: 28 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.9, ease: "easeOut" }}
-      className="absolute inset-x-0 top-[73%] mx-auto w-full max-w-[1120px] px-6 text-center sm:top-[74%] md:top-[76%]"
+      className="absolute inset-x-0 top-[78%] mx-auto w-full max-w-[1120px] px-6 text-center min-[420px]:top-[80%] md:top-[84%]"
     >
-      <p className="mx-auto max-w-[calc(100vw-2rem)] text-[0.78rem] font-bold uppercase tracking-[0.42em] text-accent-light drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)] sm:text-[0.86rem] sm:tracking-[0.48em] md:text-[0.95rem]">
-        {eyebrow}
-      </p>
+      {eyebrow && (
+        <p className="mx-auto max-w-[calc(100vw-2rem)] text-[0.78rem] font-bold uppercase tracking-[0.42em] text-accent-light drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)] sm:text-[0.86rem] sm:tracking-[0.48em] md:text-[0.95rem]">
+          {eyebrow}
+        </p>
+      )}
       {logoSrc ? (
         <div className="mx-auto mt-10 flex justify-center drop-shadow-[0_12px_38px_rgba(0,0,0,0.45)]">
           <SmartImage
