@@ -83,7 +83,7 @@ export function Footer({
             rel="noopener noreferrer"
             className="mt-3 text-[0.6rem] font-semibold uppercase tracking-[0.24em] text-stone/50 transition-colors hover:text-accent"
           >
-            BETÜL ŞAHİN YAZILIM
+            BŞ YAZILIM
           </a>
         </div>
       </div>
