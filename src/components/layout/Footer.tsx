@@ -6,6 +6,8 @@ import { BRAND_NAME, toLanguageUppercase, translations, type Language } from "@/
 import { useLanguagePreference } from "@/lib/use-language";
 import { getLocalizedFooter, getPhoneHref, type FooterSettingsView } from "@/lib/site-settings";
 
+const STUDIO_EMAIL = "info@icmimarmehmeteser.com";
+
 export function Footer({
   initialLanguage,
   footerSettings,
@@ -69,6 +71,9 @@ export function Footer({
               <FooterContactLink href={footerSettings.instagramUrl} icon="instagram" external>
                 {footerSettings.instagramHandle || "Instagram"}
               </FooterContactLink>
+              <FooterContactLink href={`mailto:${STUDIO_EMAIL}`} icon="email">
+                {STUDIO_EMAIL}
+              </FooterContactLink>
             </div>
           </div>
         </div>
@@ -98,7 +103,7 @@ function FooterContactLink({
   external = false,
 }: {
   href: string;
-  icon: "location" | "phone" | "instagram";
+  icon: "location" | "phone" | "instagram" | "email";
   children: ReactNode;
   external?: boolean;
 }) {
@@ -117,7 +122,7 @@ function FooterContactLink({
   );
 }
 
-function FooterIcon({ type }: { type: "location" | "phone" | "instagram" }) {
+function FooterIcon({ type }: { type: "location" | "phone" | "instagram" | "email" }) {
   if (type === "location") {
     return (
       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
@@ -131,6 +136,15 @@ function FooterIcon({ type }: { type: "location" | "phone" | "instagram" }) {
     return (
       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
         <path d="M7.2 4.8 9.4 4l2.1 5-1.7 1.1a10.4 10.4 0 0 0 4.1 4.1l1.1-1.7 5 2.1-.8 2.2c-.3.8-1 1.3-1.9 1.2A13.6 13.6 0 0 1 6 6.7c-.1-.9.4-1.6 1.2-1.9Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+
+  if (type === "email") {
+    return (
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
+        <rect x="4" y="6" width="16" height="12" rx="2" stroke="currentColor" strokeWidth="1.6" />
+        <path d="m5 8 7 5 7-5" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
       </svg>
     );
   }
