@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { getServerLanguage } from "@/lib/i18n-server";
 import { BRAND_NAME, toLanguageUppercase, translations } from "@/lib/i18n";
+import { ContactForm } from "@/components/contact/ContactForm";
 import { prisma } from "@/lib/prisma";
 import {
   CONTACT_SETTINGS_ID,
@@ -92,30 +93,16 @@ export default async function ContactPage() {
             />
           </div>
 
-          <form className="bg-white px-8 py-12 shadow-[0_1px_2px_rgba(0,0,0,0.08)] md:px-12 md:py-14">
-            <h2 className="font-display text-3xl tracking-[0.02em]">{t.contact.formTitle}</h2>
-            <div className="mt-10 space-y-8">
-              <Field id="name" label={t.contact.name} />
-              <Field id="email" label={t.contact.email} type="email" />
-              <Field id="phone" label={t.contact.phone} type="tel" />
-              <div>
-                <label htmlFor="message" className="mb-4 block text-[0.62rem] font-semibold uppercase tracking-[0.36em] text-warm-gray">
-                  {t.contact.message}
-                </label>
-                <textarea
-                  id="message"
-                  rows={7}
-                  className="w-full resize-y border-0 border-b border-stone bg-transparent px-0 py-4 outline-none transition-colors focus:border-accent"
-                />
-              </div>
-            </div>
-            <button
-              type="submit"
-              className="mt-9 w-full bg-[#1d1d1b] py-5 text-[0.72rem] font-semibold uppercase tracking-[0.34em] text-cream transition-colors hover:bg-accent hover:text-charcoal"
-            >
-              {t.contact.send}
-            </button>
-          </form>
+          <ContactForm
+            labels={{
+              formTitle: t.contact.formTitle,
+              name: t.contact.name,
+              email: t.contact.email,
+              phone: t.contact.phone,
+              message: t.contact.message,
+              send: t.contact.send,
+            }}
+          />
         </div>
       </div>
     </section>
@@ -129,21 +116,6 @@ function ContactRow({ label, value }: { label: string; value: ReactNode }) {
         {label}
       </p>
       <div className="max-w-[560px] text-base leading-8 text-charcoal">{value}</div>
-    </div>
-  );
-}
-
-function Field({ id, label, type = "text" }: { id: string; label: string; type?: string }) {
-  return (
-    <div>
-      <label htmlFor={id} className="mb-4 block text-[0.62rem] font-semibold uppercase tracking-[0.36em] text-warm-gray">
-        {label}
-      </label>
-      <input
-        id={id}
-        type={type}
-        className="w-full border-0 border-b border-stone bg-transparent px-0 py-4 outline-none transition-colors focus:border-accent"
-      />
     </div>
   );
 }
